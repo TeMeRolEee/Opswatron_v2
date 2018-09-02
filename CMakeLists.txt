@@ -8,6 +8,6 @@ set(CMAKE_AUTOMOC ON)
 
 find_package(Qt5Core HINTS ~/Qt/5.11.1/gcc_64/)
 
-add_executable(Opswatron_v2 main.cpp Core.cpp Core.h)
+add_executable(Opswatron_v2 main.cpp Core.cpp Core.h Player.cpp Player.h)
 
 target_link_libraries(Opswatron_v2 Qt5::Core)
