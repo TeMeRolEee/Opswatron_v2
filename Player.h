@@ -4,10 +4,6 @@
 
 class Player {
 public:
-    Player();
-
-    ~Player();
-
     int getCurrentX() const;
 
     void setCurrentX(int currentX);
@@ -19,13 +15,23 @@ public:
     const QString &getDirection() const;
 
     void setDirection(const QString &direction);
+
     bool isAlive() const;
 
     void setAlive(bool alive);
 
+    const QString &getName() const;
+
+    void setName(const QString &name);
+
+    int getId() const;
+
+    void setId(int id);
+
 private:
     int currentX, currentY;
-    QString direction;
+    QString direction, name;
     bool alive;
+    int id;
 };
 

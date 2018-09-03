@@ -8,12 +8,14 @@
 class Core : public QObject {
 Q_OBJECT
 public:
-    void processData(const QString &input);
-
+    Core();
+    ~Core();
+    void processData(const QString &input, const bool &initMode);
+    Player *createPlayer(const QJsonObject &playerData);
 private:
-    QMap<int, Player> players;
+    QMap<int, Player*> players;
     Player me;
-    QTimer qTimer;
+    QTimer *qTimer;
     int interval;
     int myId;
 

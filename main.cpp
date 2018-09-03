@@ -31,10 +31,14 @@ int main(int argc, char *argv[]) {
     bool go = true;
     std::string temp;
 
+    //Getting the info of the game
+    std::getline(std::cin, temp);
+    serverResponse = QString::fromStdString(temp);
+    core->processData(serverResponse, true);
     while (go) {
         std::getline(std::cin, temp);
         serverResponse = QString::fromStdString(temp);
-
+        core->processData(serverResponse, false);
         serverResponse.clear();
     }
 }

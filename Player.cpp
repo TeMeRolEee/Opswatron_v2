@@ -1,13 +1,5 @@
 #include "Player.h"
 
-Player::Player() {
-
-}
-
-Player::~Player() {
-
-}
-
 int Player::getCurrentX() const {
     return currentX;
 }
@@ -38,5 +30,21 @@ bool Player::isAlive() const {
 
 void Player::setAlive(bool alive) {
     Player::alive = alive;
+}
+
+const QString &Player::getName() const {
+    return name;
+}
+
+void Player::setName(const QString &name) {
+    Player::name = name;
+}
+
+int Player::getId() const {
+    return id;
+}
+
+void Player::setId(int id) {
+    Player::id = id;
 }
 
