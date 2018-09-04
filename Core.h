@@ -4,6 +4,7 @@
 #include <QtCore/QMap>
 #include <QtCore/QTimer>
 #include "Player.h"
+#include "gameMap.h"
 
 class Core : public QObject {
 Q_OBJECT
@@ -13,6 +14,7 @@ public:
     void processData(const QString &input, const bool &initMode);
     Player *createPlayer(const QJsonObject &playerData);
 private:
+    GameMap *gameMap;
     QMap<int, Player*> players;
     Player me;
     QTimer *qTimer;

@@ -10,10 +10,7 @@ Core::Core() {
 Core::~Core() {
     qTimer->stop();
     delete qTimer;
-}
-
-void setInterval(int interval) {
-    interval = interval;
+    delete gameMap;
 }
 
 void Core::processData(const QString &input, const bool &initMode) {
@@ -25,6 +22,9 @@ void Core::processData(const QString &input, const bool &initMode) {
     }
 
     QJsonArray gameMapArray = qJsonObject.value("map").toArray();
+    if (initMode) {
+        gameMap = new GameMap(gameMapArray.first().toInt(), gameMapArray.last().toInt());
+    }
 
     QJsonArray other_Players = qJsonObject.value("other_players").toArray();
     for (auto player : other_Players) {
@@ -37,7 +37,6 @@ void Core::processData(const QString &input, const bool &initMode) {
                 players.value(player.toObject().value("id").toInt())->setDirection(player.toObject().value("dir").toString());
             }
         }
-
     }
 
     me.setAlive(qJsonObject.value("player").toObject().value("alive").toBool());
