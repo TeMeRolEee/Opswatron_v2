@@ -43,6 +43,10 @@ void Core::processData(const QString &input, const bool &initMode) {
     me.setCurrentX(qJsonObject.value("player").toArray().first().toInt());
     me.setCurrentY(qJsonObject.value("player").toArray().last().toInt());
 
+    QJsonArray wallArray = qJsonObject.value("walls").toArray();
+    for (auto bricks : wallArray) {
+        gameMap->placeWall(bricks.toArray().first().toInt(), bricks.toArray().last().toInt());
+    }
 }
 
 Player *Core::createPlayer(const QJsonObject &playerData) {

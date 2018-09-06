@@ -4,8 +4,8 @@
 GameMap::GameMap(const int &width, const int &height) :
         width(width),
         height(height) {
-    QVector<QVector*> *row = new QVector<QVector*>;
-    row->reserve(height);
+    QVector<QVector<int>*> *row = new QVector<QVector<int>*>;
+    row->reserve(width);
     for (int y = 0; y < height; y++) {
         QVector<int> *column = new QVector<int>;
         column->reserve(width);
