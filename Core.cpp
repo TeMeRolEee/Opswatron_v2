@@ -1,6 +1,11 @@
+#include <chrono>
+
+#include <QDebug>
+
 #include <QtCore/QJsonObject>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonArray>
+
 #include "Core.h"
 
 Core::Core() {
@@ -14,6 +19,7 @@ Core::~Core() {
 }
 
 void Core::processData(const QString &input, const bool &initMode) {
+    std::chrono::high_resolution_clock::time_point point1 = std::chrono::high_resolution_clock::now();
     QJsonObject qJsonObject = QJsonDocument::fromJson(input.toUtf8()).object();
 
     if (interval != qJsonObject.value("interval").toInt()) {
@@ -28,13 +34,16 @@ void Core::processData(const QString &input, const bool &initMode) {
 
     QJsonArray other_Players = qJsonObject.value("other_players").toArray();
     for (auto player : other_Players) {
-        if(initMode) {
+        if (initMode) {
             players.insert(player.toObject().value("id").toInt(), createPlayer(player.toObject()));
         } else {
             if (player.toObject().value("alive").toBool()) {
-                players.value(player.toObject().value("id").toInt())->setCurrentX(player.toObject().value("coords").toArray().first().toInt());
-                players.value(player.toObject().value("id").toInt())->setCurrentY(player.toObject().value("coords").toArray().last().toInt());
-                players.value(player.toObject().value("id").toInt())->setDirection(player.toObject().value("dir").toString());
+                players.value(player.toObject().value("id").toInt())->setCurrentX(
+                        player.toObject().value("coords").toArray().first().toInt());
+                players.value(player.toObject().value("id").toInt())->setCurrentY(
+                        player.toObject().value("coords").toArray().last().toInt());
+                players.value(player.toObject().value("id").toInt())->setDirection(
+                        player.toObject().value("dir").toString());
             }
         }
     }
@@ -45,8 +54,12 @@ void Core::processData(const QString &input, const bool &initMode) {
 
     QJsonArray wallArray = qJsonObject.value("walls").toArray();
     for (auto bricks : wallArray) {
-        gameMap->placeWall(bricks.toArray().first().toInt(), bricks.toArray().last().toInt());
+        gameMap->placeWall(bricks.toObject().value("coords").toArray().first().toInt(),
+                           bricks.toObject().value("coords").toArray().last().toInt());
     }
+    std::chrono::high_resolution_clock::time_point point2 = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(point2 - point1).count();
+    qDebug() << "time needed to process data:" << duration << "ms";
 }
 
 Player *Core::createPlayer(const QJsonObject &playerData) {

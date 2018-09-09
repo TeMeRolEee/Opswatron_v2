@@ -8,10 +8,11 @@ public:
     ~GameMap();
 
     void showMap();
-    void placeWall(const int &x, const int &y);
+    void placeWall(int x, int y);
+
 private:
     int width, height;
-    QVector<QVector<int>*> *gameMap;
+    QMap<std::pair<int,int>,int> *gameMap;
 
 };
 

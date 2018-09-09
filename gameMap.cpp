@@ -1,21 +1,18 @@
 #include <iostream>
+#include <QDebug>
+
 #include "gameMap.h"
 
-GameMap::GameMap(const int &width, const int &height) :
-        width(width),
-        height(height) {
-    QVector<QVector<int>*> *row = new QVector<QVector<int>*>;
-    row->reserve(width);
-    for (int y = 0; y < height; y++) {
-        QVector<int> *column = new QVector<int>;
-        column->reserve(width);
-        for (int x = 0; x < width; x++) {
-            column->replace(x, 0);
+GameMap::GameMap(const int &inputWidth, const int &inputHeight):
+    width(inputWidth),
+    height(inputHeight) {
+    gameMap = new QMap<std::pair<int,int>, int>;
+    for (int x = 0; x < width; x++) {
+        for (int y = 0; y < height; y++) {
+            std::pair<int,int> mapPlace (x,y);
+            gameMap->insert(mapPlace, 0);
         }
-        row->replace(y, column);
     }
-    gameMap = std::move(row);
-    showMap();
 }
 
 GameMap::~GameMap() {
@@ -24,14 +21,19 @@ GameMap::~GameMap() {
 
 void GameMap::showMap() {
     for (int y = 0; y < height; y++) {
-        QString line;
+        std::string line;
         for (int x = 0; x < width; x++) {
-            line.append(gameMap->at(y)->at(x));
+            std::pair<int,int> mapPlace (x,y);
+            line += std::to_string(gameMap->value(mapPlace));
         }
-        std::cout << line.toStdString() << std::endl;
+        std::cout << line << std::endl;
     }
+    std::cout << std::endl << std::endl;
 }
 
-void GameMap::placeWall(const int &x, const int &y) {
-    gameMap->at(y)->replace(x, 1);
+void GameMap::placeWall(int x,int y) {
+    //qDebug() << x << y;
+    gameMap->remove(std::pair<int,int>(x,y));
+    gameMap->insert(std::pair<int,int>(x,y),1);
+    //showMap();
 }
