@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QtCore/QVector>
+#include <QMap>
 
 class GameMap {
 public:
@@ -12,7 +12,7 @@ public:
 
 private:
     int width, height;
-    QMap<std::pair<int,int>,int> *gameMap;
+    QMap<QPair<int,int>,int> *gameMap;
 
 };
 

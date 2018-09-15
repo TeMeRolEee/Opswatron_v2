@@ -18,52 +18,57 @@ Core::~Core() {
     delete gameMap;
 }
 
-void Core::processData(const QString &input, const bool &initMode) {
-    std::chrono::high_resolution_clock::time_point point1 = std::chrono::high_resolution_clock::now();
+void Core::initCore(const QString &input) {
     QJsonObject qJsonObject = QJsonDocument::fromJson(input.toUtf8()).object();
+    interval = qJsonObject.value("interval").toInt();
+
+    QJsonArray gameMapArray = qJsonObject.value("map").toArray();
+    gameMap = new GameMap(gameMapArray.first().toInt(), gameMapArray.last().toInt());
+
+    QJsonArray other_Players = qJsonObject.value("other_players").toArray();
+    for (auto player : other_Players) {
+        players.insert(player.toObject().value("id").toInt(), createPlayer(player.toObject()));
+    }
+}
+
+void Core::processData(const QJsonObject &qJsonObject) {
+    auto point1 = std::chrono::high_resolution_clock::now();
 
     if (interval != qJsonObject.value("interval").toInt()) {
         interval = qJsonObject.value("interval").toInt();
         qTimer->setInterval(interval);
     }
 
-    QJsonArray gameMapArray = qJsonObject.value("map").toArray();
-    if (initMode) {
-        gameMap = new GameMap(gameMapArray.first().toInt(), gameMapArray.last().toInt());
-    }
-
     QJsonArray other_Players = qJsonObject.value("other_players").toArray();
     for (auto player : other_Players) {
-        if (initMode) {
-            players.insert(player.toObject().value("id").toInt(), createPlayer(player.toObject()));
-        } else {
-            if (player.toObject().value("alive").toBool()) {
-                players.value(player.toObject().value("id").toInt())->setCurrentX(
-                        player.toObject().value("coords").toArray().first().toInt());
-                players.value(player.toObject().value("id").toInt())->setCurrentY(
-                        player.toObject().value("coords").toArray().last().toInt());
-                players.value(player.toObject().value("id").toInt())->setDirection(
-                        player.toObject().value("dir").toString());
-            }
+        if (player.toObject().value("alive").toBool()) {
+            int playerId = player.toObject().value("id").toInt();
+            QJsonArray coordsArray = player.toObject().value("coords").toArray();
+            players.value(playerId)->setCurrentX(coordsArray.first().toInt());
+            players.value(playerId)->setCurrentY(coordsArray.last().toInt());
+            players.value(playerId)->setDirection(player.toObject().value("dir").toString());
         }
     }
 
     me.setAlive(qJsonObject.value("player").toObject().value("alive").toBool());
-    me.setCurrentX(qJsonObject.value("player").toArray().first().toInt());
-    me.setCurrentY(qJsonObject.value("player").toArray().last().toInt());
+    QJsonArray playerPosArray = qJsonObject.value("player").toArray();
+    me.setCurrentX(playerPosArray.first().toInt());
+    me.setCurrentY(playerPosArray.last().toInt());
 
     QJsonArray wallArray = qJsonObject.value("walls").toArray();
     for (auto bricks : wallArray) {
-        gameMap->placeWall(bricks.toObject().value("coords").toArray().first().toInt(),
-                           bricks.toObject().value("coords").toArray().last().toInt());
+        QJsonArray brickArray = bricks.toObject().value("coords").toArray();
+        gameMap->placeWall(brickArray.first().toInt(),
+                           brickArray.last().toInt());
     }
-    std::chrono::high_resolution_clock::time_point point2 = std::chrono::high_resolution_clock::now();
+
+    auto point2 = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(point2 - point1).count();
     qDebug() << "time needed to process data:" << duration << "ms";
 }
 
 Player *Core::createPlayer(const QJsonObject &playerData) {
-    Player *actualPlayer = new Player();
+    auto *actualPlayer = new Player();
 
     actualPlayer->setCurrentX(playerData.value("coords").toArray().first().toInt());
     actualPlayer->setCurrentY(playerData.value("coords").toArray().last().toInt());
