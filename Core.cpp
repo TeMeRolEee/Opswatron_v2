@@ -29,6 +29,11 @@ void Core::initCore(const QString &input) {
     for (auto player : other_Players) {
         players.insert(player.toObject().value("id").toInt(), createPlayer(player.toObject()));
     }
+
+    auto *worker = new Worker(workerCount++);
+    connect(worker, &Worker::resultReady, this, &Core::handleResults);
+    connect(this, &Core::getResultNow, worker, &Worker::shutDownWorker);
+    connect(qTimer, &QTimer::timeout, worker, &Worker::shutDownWorker);
 }
 
 void Core::processData(const QJsonObject &qJsonObject) {
@@ -78,6 +83,10 @@ Player *Core::createPlayer(const QJsonObject &playerData) {
     actualPlayer->setName(playerData.value("name").toString());
 
     return actualPlayer;
+}
+
+void Core::handleResults(const int &id, const QString &qString) {
+
 }
 
 
