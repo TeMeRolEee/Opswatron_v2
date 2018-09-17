@@ -2,13 +2,14 @@
 #include "Core.h"
 #include <QDebug>
 
-Worker::Worker(const int &id, GameMap &gameMap, QMap<int, Player*> &players): id(id) {
-    this->gameMap = &gameMap;
-    this->players = players;
+Worker::Worker(const int &id, GameMap &gameMap, QMap<int, Player*> &players, const int &direction): id(id),
+    gameMap(&gameMap),
+    players(players),
+    direction(direction) {
 }
 
 Worker::~Worker() {
-
+    delete gameMap;
 }
 
 void Worker::run() {

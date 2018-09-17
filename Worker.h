@@ -8,7 +8,7 @@ class Worker: public QThread {
 Q_OBJECT
 
 public:
-    Worker(const int &id, GameMap &gameMap, QMap<int, Player*> &players);
+    Worker(const int &id, GameMap &gameMap, QMap<int, Player*> &players, const int &direction);
     ~Worker();
 
 protected:
@@ -28,6 +28,8 @@ private:
     QString findPath();
 
     QString currentBestMove;
+
+    QString direction;
 
 public slots:
     void shutDownWorker();

@@ -7,6 +7,7 @@
 #include <QtCore/QJsonArray>
 
 #include "Core.h"
+#include "directions.h"
 
 Core::Core() {
     qTimer = new QTimer();
@@ -30,10 +31,8 @@ void Core::initCore(const QString &input) {
         players.insert(player.toObject().value("id").toInt(), createPlayer(player.toObject()));
     }
 
-    auto *worker = new Worker(workerCount++, *gameMap, players);
-    connect(worker, &Worker::resultReady, this, &Core::handleResults);
-    connect(this, &Core::getResultNow, worker, &Worker::shutDownWorker);
-    connect(qTimer, &QTimer::timeout, worker, &Worker::shutDownWorker);
+    createWorkers();
+
 }
 
 void Core::processData(const QJsonObject &qJsonObject) {
@@ -99,6 +98,36 @@ const QMap<int, Player *> &Core::getPlayers() const {
 
 const Player &Core::getMe() const {
     return me;
+}
+
+void Core::createWorkers() {
+    int currentDirection;
+    QString direction = me.getDirection();
+
+    if (direction == "UP") {
+        currentDirection = 1;
+    } else if (direction == "DOWN") {
+        currentDirection = -1;
+    } else if (direction == "LEFT") {
+        currentDirection = 2;
+    } else {
+        currentDirection = -2;
+    }
+
+    QVector<int> directionsVector;
+    directionsVector.push_back(1);
+    directionsVector.push_back(-1);
+    directionsVector.push_back(2);
+    directionsVector.push_back(-2);
+
+    for (int i = 0; i < 3; i++) {
+        if (currentDirection*(-1) != directionsVector[i]) {
+            auto *worker = new Worker(workerCount++, *gameMap, players, directionsVector[i]);
+            connect(worker, &Worker::resultReady, this, &Core::handleResults);
+            connect(this, &Core::getResultNow, worker, &Worker::shutDownWorker);
+            connect(qTimer, &QTimer::timeout, worker, &Worker::shutDownWorker);
+        }
+    }
 }
 
 
