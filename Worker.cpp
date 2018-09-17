@@ -1,9 +1,18 @@
 #include "Worker.h"
+#include "Core.h"
 #include <QDebug>
+
+Worker::Worker(const int &id, GameMap &gameMap, QMap<int, Player*> &players): id(id) {
+    this->gameMap = &gameMap;
+    this->players = players;
+}
+
+Worker::~Worker() {
+
+}
 
 void Worker::run() {
     QString result;
-
 
 
     qDebug() << QThread::currentThreadId();
@@ -15,16 +24,9 @@ QString Worker::findPath() {
     return QString();
 }
 
-Worker::Worker(const int &id): id(id) {
-
-}
-
 void Worker::shutDownWorker() {
     emit resultReady(id, currentBestMove);
 }
 
-QMap<QPair<int, int>, int> *Worker::setMap(QMap<QPair<int, int>, int> &gameMap) {
-    auto tempMap = new QMap<QPair<int,int>,int>;
-    *tempMap = gameMap;
-    return tempMap;
-}
+
+

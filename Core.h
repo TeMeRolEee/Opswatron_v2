@@ -17,6 +17,13 @@ public:
     void processData(const QJsonObject &qJsonObject);
     Player *createPlayer(const QJsonObject &playerData);
 
+public:
+    GameMap *getGameMap() const;
+
+    const QMap<int, Player *> &getPlayers() const;
+
+    const Player &getMe() const;
+
 private:
     GameMap *gameMap;
     QMap<int, Player*> players;

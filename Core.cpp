@@ -30,7 +30,7 @@ void Core::initCore(const QString &input) {
         players.insert(player.toObject().value("id").toInt(), createPlayer(player.toObject()));
     }
 
-    auto *worker = new Worker(workerCount++);
+    auto *worker = new Worker(workerCount++, *gameMap, players);
     connect(worker, &Worker::resultReady, this, &Core::handleResults);
     connect(this, &Core::getResultNow, worker, &Worker::shutDownWorker);
     connect(qTimer, &QTimer::timeout, worker, &Worker::shutDownWorker);
@@ -87,6 +87,18 @@ Player *Core::createPlayer(const QJsonObject &playerData) {
 
 void Core::handleResults(const int &id, const QString &qString) {
 
+}
+
+GameMap *Core::getGameMap() const {
+    return gameMap;
+}
+
+const QMap<int, Player *> &Core::getPlayers() const {
+    return players;
+}
+
+const Player &Core::getMe() const {
+    return me;
 }
 
 
