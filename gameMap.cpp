@@ -37,3 +37,7 @@ void GameMap::placeWall(int x,int y) {
     gameMap->insert(QPair<int,int>(x,y),1);
     //showMap();
 }
+
+int GameMap::getPositionInfo(const QPair<int, int> &position) {
+    return gameMap->value(position);
+}

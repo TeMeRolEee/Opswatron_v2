@@ -1,10 +1,10 @@
 #pragma once
 
 enum class Directions {
-    UP = 1,
-    DOWN = -1,
+    UP = 0,
+    DOWN = 1,
     LEFT = 2,
-    RIGHT = -2
+    RIGHT = 3
 
 };
 

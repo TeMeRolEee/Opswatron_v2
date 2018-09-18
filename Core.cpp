@@ -31,7 +31,7 @@ void Core::initCore(const QString &input) {
         players.insert(player.toObject().value("id").toInt(), createPlayer(player.toObject()));
     }
 
-    createWorkers();
+
 
 }
 
@@ -69,6 +69,9 @@ void Core::processData(const QJsonObject &qJsonObject) {
     auto point2 = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(point2 - point1).count();
     qDebug() << "time needed to process data:" << duration << "ms";
+
+    createWorkers();
+
 }
 
 Player *Core::createPlayer(const QJsonObject &playerData) {
@@ -85,7 +88,10 @@ Player *Core::createPlayer(const QJsonObject &playerData) {
 }
 
 void Core::handleResults(const int &id, const QString &qString) {
+    workers.value(id)->quit();
+    workers.value(id)->wait();
 
+    delete workers.take(id);
 }
 
 GameMap *Core::getGameMap() const {
@@ -101,31 +107,48 @@ const Player &Core::getMe() const {
 }
 
 void Core::createWorkers() {
+    workerCount = 0;
+
+    workers.clear();
+
     int currentDirection;
     QString direction = me.getDirection();
 
     if (direction == "UP") {
-        currentDirection = 1;
+        currentDirection = 0;
     } else if (direction == "DOWN") {
-        currentDirection = -1;
+        currentDirection = 1;
     } else if (direction == "LEFT") {
         currentDirection = 2;
     } else {
-        currentDirection = -2;
+        currentDirection = 3;
     }
 
+    QMap<QString, int> stringToIntDir= {
+            {"UP", 0},
+            {"DOWN", 1},
+            {"LEFT", 2},
+            {"RIGHT", 3}
+    };
+
     QVector<int> directionsVector;
+    directionsVector.push_back(0);
     directionsVector.push_back(1);
-    directionsVector.push_back(-1);
     directionsVector.push_back(2);
-    directionsVector.push_back(-2);
+    directionsVector.push_back(3);
+    qDebug() << currentDirection;
 
     for (int i = 0; i < 3; i++) {
-        if (currentDirection*(-1) != directionsVector[i]) {
-            auto *worker = new Worker(workerCount++, *gameMap, players, directionsVector[i]);
+        if (currentDirection != directionsVector[i]) {
+            auto *worker = new Worker(workerCount, *gameMap, players, directionsVector[i], 0);
+
+            workers.insert(workerCount, worker);
+            workerCount++;
+
             connect(worker, &Worker::resultReady, this, &Core::handleResults);
             connect(this, &Core::getResultNow, worker, &Worker::shutDownWorker);
             connect(qTimer, &QTimer::timeout, worker, &Worker::shutDownWorker);
+            worker->start();
         }
     }
 }
