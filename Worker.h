@@ -38,7 +38,7 @@ private:
 
     bool isRunning;
 
-    QString findPath();
+    QMap<int, int> points;
 
     QString currentBestMove;
 
@@ -46,9 +46,13 @@ private:
 
     QMap<QString, int> stringToIntDir;
 
+    void decideBestWay();
+
 public slots:
 
     void shutDownWorker();
+
+    void handleResults(const int &id, const int &depth);
 
 signals:
 

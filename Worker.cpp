@@ -9,11 +9,17 @@ Worker::Worker(const int &id, GameMap &gameMap, QMap<int, Player*> &players, con
     players(players),
     direction(direction),
     currentDepth(depth){
-    stringToIntDir= {
+    stringToIntDir = {
             {"UP", 0},
             {"DOWN", 1},
             {"LEFT", 2},
             {"RIGHT", 3}
+    };
+    points = {
+            {0, 0},
+            {1, 0},
+            {2, 0},
+            {3, 0}
     };
     qTimer->setInterval(interval);
 }
@@ -29,10 +35,6 @@ void Worker::run() {
     qDebug() << QThread::currentThreadId();
 
     emit resultReady(id, result);
-}
-
-QString Worker::findPath() {
-    return QString();
 }
 
 void Worker::shutDownWorker() {
@@ -75,5 +77,15 @@ QPair<int, int> Worker::returnNextPos(const QPair<int, int> &currentPosition, co
             return QPair<int, int>(currentPosition.first-1, currentPosition.second+1);
         default:break;
     }
+}
+
+void Worker::handleResults(const int &id, const int &depth) {
+    if (points[id] < depth) {
+        points[id] = depth;
+    }
+}
+
+void Worker::decideBestWay() {
+
 }
 
