@@ -30,6 +30,8 @@ public:
 
     const Player &getMe() const;
 
+    void think();
+
 private:
     Utils utils;
 
@@ -42,8 +44,14 @@ private:
     QTimer *qTimer;
 
     int interval = 0;
+public:
+    int getInterval() const;
+
+private:
 
     int workerCount = 0;
+
+    int workerFinished = 0;
 
     QMap<int, Worker *> workers;
 
@@ -61,7 +69,7 @@ private:
 
 public slots:
 
-    void handleResults(const int &id, const int &score);
+    void handleResults(const int &id, const int &direction, const int &score);
 
 signals:
 

@@ -11,6 +11,7 @@ GameMap::GameMap(const int &inputWidth, const int &inputHeight):
         for (int y = 0; y < height; y++) {
             QPair<int,int> mapPlace (x,y);
             gameMap->insert(mapPlace, 0);
+
         }
     }
 }
@@ -39,5 +40,8 @@ void GameMap::placeWall(int x,int y) {
 }
 
 int GameMap::getPositionInfo(const QPair<int, int> &position) {
-    return gameMap->value(position);
+    if ((0 < position.first < width) && (0 < position.second) < height) {
+        return gameMap->value(position);
+    }
+    return -1;
 }

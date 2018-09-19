@@ -24,19 +24,19 @@ private:
 
     QPair<int, int> position;
 
-    QTimer *qTimer;
-
-    QMap<int, Worker *> workers;
-
     GameMap *gameMap;
 
     QMap<int, Player *> players;
 
     QMap<int, int> score;
 
-    QString currentBestMove;
+    QPair<int, int> result;
+public:
+    const QPair<int, int> &getResult() const;
 
-    void testPaths(const int &direction, int &depth, const int &rootDirection);
+private:
+
+    void testPaths(const int &rootDirection, const int &currentDirection, const int &depth, QPair<int, int> &pos);
 
     QString direction;
 
@@ -45,12 +45,13 @@ private:
     QMap<QString, QString> reverseDirection;
 
     int workerCount, id, currentDepth;
+public:
+    int getId() const;
 
-    int decideBestWay();
 
 public slots:
-    void shutDownWorker();
+    void getMeThoseNumbers();
 
 signals:
-    void resultReady(const int &id, const int &depth);
+    void resultReady(const int &id, const int &direction, const int &score);
 };

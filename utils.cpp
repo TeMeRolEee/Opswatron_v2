@@ -18,7 +18,11 @@ QPair<int, int> Utils::returnNextPos(const QPair<int, int> &currentPosition, con
 }
 
 bool Utils::checkObstacle(const QPair<int, int> &currentPosition, const QString &direction, GameMap &gameMap) {
-    return gameMap.getPositionInfo(returnNextPos(currentPosition, stringToIntDir.value(direction))) == 1;
+    int tempValue = gameMap.getPositionInfo(returnNextPos(currentPosition, stringToIntDir.value(direction)));
+    if (tempValue != -1) {
+        return tempValue == 1;
+    }
+    return true;
 }
 
 Utils::Utils() {
@@ -32,4 +36,17 @@ Utils::Utils() {
 
 Utils::~Utils() {
 
+}
+
+QPair<int, int> Utils::decideBestWay(QMap<int, int> &score) {
+    int bestDirection = stringToIntDir.value("UP");
+    int bestScore = score.value(bestDirection);
+
+    for (auto currentDir : score.keys()) {
+        if (score.value(currentDir) >= bestScore) {
+            bestScore = score.value(currentDir);
+            bestDirection = currentDir;
+        }
+    }
+    return QPair<int, int>(bestDirection, bestScore);
 }

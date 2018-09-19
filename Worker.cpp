@@ -31,76 +31,79 @@ Worker::Worker(const int &id, GameMap &gameMap, QMap<int, Player *> &players, co
             {2, 0},
             {3, 0}
     };
-    qTimer->setInterval(interval);
+    //connect(this, &Worker::resultReady, this, []() {
+    //   qDebug() << "MIAFASZOMEZASZARMAAAAAA";
+    //});
 }
 
 Worker::~Worker() {
-    delete gameMap;
 }
 
 void Worker::run() {
-    qTimer->start();
-    int result;
-
+    //qDebug() << QThread::currentThreadId();
     QVector<int> possibleDirections;
     int currentReverseDirection = stringToIntDir.value(reverseDirection.value(direction));
 
     for (const auto &value : stringToIntDir) {
-        if ((value != currentReverseDirection) &&
-            (utils.checkObstacle(position, stringToIntDir.key(value), *gameMap))) {
-            possibleDirections.push_back(value);
+        //qDebug() << "run" << (stringToIntDir.key(value) != stringToIntDir.key(currentReverseDirection) &&
+        //             !(utils.checkObstacle(position, stringToIntDir.key(value), *gameMap)));
+        if (stringToIntDir.key(value) != stringToIntDir.key(currentReverseDirection) &&
+            !(utils.checkObstacle(position, stringToIntDir.key(value), *gameMap))) {
+            //qDebug() << "starting testPath" << value << currentDepth;
+            testPaths(value, currentDepth, 1, position);
         }
     }
-    for (const auto &currentDirection : stringToIntDir.keys()) {
-        if (direction != reverseDirection.value(currentDirection)) {
-            int dir = stringToIntDir.value(currentDirection);
-            testPaths(dir, currentDepth, dir);
-        }
-
-    }
 
 
-    result = decideBestWay();
+    result = utils.decideBestWay(score);
+    qDebug() << "worker_score" << id << ":" << score;
+    qDebug() << "result:" << id << ":" << result;
 
-    qDebug() << QThread::currentThreadId();
 
-    emit resultReady(id, result);
+    //emit resultReady(id, result.first, result.second);
 }
-
+/*
 void Worker::shutDownWorker() {
-    emit resultReady(id, currentDepth);
-}
+    emit resultReady(id, result.first, result.second);
+}*/
 
+void Worker::testPaths(const int &rootDirection, const int &currentDirection, const int &depth, QPair<int, int> &pos) {
+    if (depth < 4) {
+        qDebug() << depth;
+        for (const auto &currentAutoDirection : stringToIntDir.keys()) {
+            qDebug() << "yes_or_no"
+                     << ((currentAutoDirection != reverseDirection.value(stringToIntDir.key(currentDirection))) &&
+                            !(utils.checkObstacle(position, stringToIntDir.key(stringToIntDir.value(currentAutoDirection)),
+                                                  *gameMap)));
+            if ((currentAutoDirection != reverseDirection.value(stringToIntDir.key(currentDirection))) &&
+                !(utils.checkObstacle(position, stringToIntDir.key(stringToIntDir.value(currentAutoDirection)),
+                                      *gameMap))) {
+                int temp = depth + 1;
 
-int Worker::decideBestWay() {
-    int bestDirection = stringToIntDir.value(direction);
-    int bestScore = score.value(bestDirection);
-
-    for (auto currentDir : score.keys()) {
-        if (score.value(currentDir) > bestScore) {
-            bestScore = score.value(currentDir);
-            bestDirection = currentDir;
-        }
-    }
-}
-
-void Worker::testPaths(const int &direction, int &depth, const int &rootDirection) {
-    int nextDepth = depth;
-    if (nextDepth < 3) {
-
-
-        for (const auto &currentDirection : stringToIntDir.keys()) {
-            if (direction != reverseDirection.value(currentDirection)) {
-                QPair<int, int> nextPath = utils.returnNextPos(position, direction);
-                if (!utils.checkObstacle(nextPath, currentDirection, *gameMap)) {
-                     testPaths(stringToIntDir.value(currentDirection), nextDepth, rootDirection);
-                } else {
-                    score[rootDirection] = nextDepth;
+                QPair<int, int> tempPos = utils.returnNextPos(pos, currentDirection);
+                qDebug() << tempPos;
+                testPaths(rootDirection, stringToIntDir.value(currentAutoDirection), temp, tempPos);
+            } else {
+                //qDebug() << "PATTTTH";
+                if (score.value(rootDirection) < depth) {
+                    score.remove(rootDirection);
+                    score.insert(rootDirection, depth);
                 }
+                break;
             }
-
         }
-        nextDepth++;
     }
+}
+
+void Worker::getMeThoseNumbers() {
+    emit resultReady(id, result.first, result.second);
+}
+
+const QPair<int, int> &Worker::getResult() const {
+    return result;
+}
+
+int Worker::getId() const {
+    return id;
 }
 

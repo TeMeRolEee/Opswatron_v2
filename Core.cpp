@@ -40,7 +40,7 @@ Core::~Core() {
 
 void Core::initCore(const QString &input) {
     QJsonObject qJsonObject = QJsonDocument::fromJson(input.toUtf8()).object();
-    interval = qJsonObject.value("interval").toInt()-5;
+    interval = qJsonObject.value("interval").toInt() - 5;
     qTimer->start();
     QJsonArray gameMapArray = qJsonObject.value("map").toArray();
     gameMap = new GameMap(gameMapArray.first().toInt(), gameMapArray.last().toInt());
@@ -50,28 +50,16 @@ void Core::initCore(const QString &input) {
         players.insert(player.toObject().value("id").toInt(), createPlayer(player.toObject()));
     }
 
-    QVector<int> possibleDirections;
-    int currentReverseDirection = stringToIntDir.value(reverseDirection.value(me.getDirection()));
-
-    for (const auto &value : stringToIntDir) {
-        if ((value != currentReverseDirection) &&
-            (utils.checkObstacle(QPair<int, int>(me.getCurrentX(), me.getCurrentY()), stringToIntDir.key(value),
-                                 *gameMap))) {
-            possibleDirections.push_back(value);
-        }
-    }
-
 }
 
 void Core::processData(const QJsonObject &qJsonObject) {
-    //auto point1 = std::chrono::high_resolution_clock::now();
+    auto point1 = std::chrono::high_resolution_clock::now();
 
     if (interval != qJsonObject.value("interval").toInt()) {
-        interval = qJsonObject.value("interval").toInt();
+        interval = static_cast<int>(qJsonObject.value("interval").toInt() * 0.8);
         qTimer->setInterval(interval);
     }
-
-
+    qTimer->start();
 
     QJsonArray other_Players = qJsonObject.value("other_players").toArray();
     for (auto player : other_Players) {
@@ -96,30 +84,26 @@ void Core::processData(const QJsonObject &qJsonObject) {
                            brickArray.last().toInt());
     }
 
-    //auto point2 = std::chrono::high_resolution_clock::now();
-    //auto duration = std::chrono::duration_cast<std::chrono::microseconds>(point2 - point1).count();
-    //qDebug() << "time needed to process data:" << duration << "ms";
+    auto point2 = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(point2 - point1).count();
 
     QVector<int> possibleDirections;
     int currentReverseDirection = stringToIntDir.value(reverseDirection.value(me.getDirection()));
 
     for (const auto &value : stringToIntDir) {
-        if ((value != currentReverseDirection) &&
-            (utils.checkObstacle(me.getCurrentPosition(), stringToIntDir.key(value), *gameMap))) {
+        //qDebug() << me.getDirection() << value << ((stringToIntDir.key(value) != stringToIntDir.key(currentReverseDirection)) &&
+        //                                           !(utils.checkObstacle(me.getCurrentPosition(), stringToIntDir.key(value), *gameMap)));
+        if ((stringToIntDir.key(value) != stringToIntDir.key(currentReverseDirection)) &&
+            !(utils.checkObstacle(me.getCurrentPosition(), stringToIntDir.key(value), *gameMap))) {
+            //qDebug() << value;
             possibleDirections.push_back(value);
         }
     }
 
     createWorkers(possibleDirections);
 
-    int bestDirection = stringToIntDir.value(me.getDirection());
-    int bestScore = score.value(bestDirection);
-    for (auto currentDir : score.keys()) {
-        if(score.value(currentDir) >  bestScore ) {
-            bestScore = score.value(currentDir);
-            bestDirection = currentDir;
-        }
-    }
+    think();
+    //qDebug() << "time needed to process data:" << duration << "ms";
 
 }
 
@@ -136,13 +120,12 @@ Player *Core::createPlayer(const QJsonObject &playerData) {
     return actualPlayer;
 }
 
-void Core::handleResults(const int &id, const int &inputScore) {
-    workers.value(id)->quit();
-    workers.value(id)->wait();
-
-    score[id] = inputScore;
-
-    delete workers.take(id);
+void Core::handleResults(const int &id, const int &direction, const int &inputScore) {
+    //qDebug() << "deleting thread:" << id << direction << inputScore;
+    workerFinished++;
+    if (score.value(direction) < inputScore) {
+        score[direction] = inputScore;
+    }
 }
 
 GameMap *Core::getGameMap() const {
@@ -158,36 +141,87 @@ const Player &Core::getMe() const {
 }
 
 void Core::createWorkers(const QVector<int> &directions) {
-    int currentDirection = stringToIntDir.value(me.getDirection());
-
+    int currentReverseDirection = stringToIntDir.value(reverseDirection.value(me.getDirection()));
+    int i = 0;
     for (auto currentPossibleDirection : directions) {
-        auto *worker = new Worker(workerCount, *gameMap, players, currentPossibleDirection, 0,
-                                  static_cast<int>(interval * 0.95),
-                                  QPair<int, int>(me.getCurrentX(), me.getCurrentY()));
-
-        workers.insert(workerCount, worker);
-        workerCount++;
-
-        connect(worker, &Worker::resultReady, this, &Core::handleResults);
-        connect(this, &Core::getResultNow, worker, &Worker::shutDownWorker);
-        connect(qTimer, &QTimer::timeout, worker, &Worker::shutDownWorker);
-        worker->start();
+            //qDebug() << currentPossibleDirection << "false or not:"
+            //     << (stringToIntDir.key(currentPossibleDirection) != stringToIntDir.key(currentReverseDirection))
+            //     << stringToIntDir.key(currentPossibleDirection) << stringToIntDir.key(currentReverseDirection);
+            auto *worker = new Worker(workerCount, *gameMap, players, currentPossibleDirection, 0,
+                                      static_cast<int>(interval * 0.95),
+                                      QPair<int, int>(me.getCurrentX(), me.getCurrentY()));
+            workers.insert(workerCount, worker);
+            workerCount++;
+            connect(this, &Core::getResultNow, worker, &Worker::getMeThoseNumbers);
+            connect(worker, &Worker::resultReady, this, &Core::handleResults);
+            worker->start(QThread::HighestPriority);
     }
 }
 
 void Core::printNextDirection(const int &direction) {
+    //qDebug() << direction;
     switch (direction) {
         case static_cast<int>(Directions::UP):
-            std::cout << QStringLiteral("{\"dir\":\"UP\"}").arg(stringToIntDir.key(direction)).toStdString() << std::endl;
+            std::cout << QStringLiteral("{\"dir\": \"UP\"}").toStdString()
+                      << std::endl;
+            break;
         case static_cast<int>(Directions::DOWN):
-            std::cout << QStringLiteral("{\"dir\":\"DOWN\"}").arg(stringToIntDir.key(direction)).toStdString() << std::endl;
+            std::cout << QStringLiteral("{\"dir\": \"DOWN\"}").toStdString()
+                      << std::endl;
+            break;
         case static_cast<int>(Directions::LEFT):
-            std::cout << QStringLiteral("{\"dir\":\"LEFT\"}").arg(stringToIntDir.key(direction)).toStdString() << std::endl;
+            std::cout << QStringLiteral("{\"dir\": \"LEFT\"}").toStdString()
+                      << std::endl;
+            break;
         case static_cast<int>(Directions::RIGHT):
-            std::cout << QStringLiteral("{\"dir\":\"RIGHT\"}").arg(stringToIntDir.key(direction)).toStdString() << std::endl;
+            std::cout << QStringLiteral("{\"dir\": \"RIGHT\"}").toStdString()
+                      << std::endl;
+            break;
         default:
             break;
     }
+}
+
+int Core::getInterval() const {
+    return interval;
+}
+
+void Core::think() {
+    auto point1 = std::chrono::high_resolution_clock::now();
+    for (auto worker : workers) {
+        //qDebug() << worker->getId() << worker->getResult();
+        int id = worker->getResult().first;
+        int scoreNumber = worker->getId();
+        if (score.value(id) < scoreNumber) {
+            score.remove(id);
+            score.insert(id, scoreNumber);
+        }
+    }
+
+    //qDebug() << score;
+    QPair<int, int> result;
+    //qDebug() << score;
+    result = utils.decideBestWay(score);
+    //qDebug() << result.first;
+    printNextDirection(result.first);
+
+    auto point2 = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(point2 - point1).count();
+
+    for (auto id : workers.keys()) {
+        workers.value(id)->quit();
+        workers.value(id)->wait();
+
+        delete workers.take(id);
+    }
+    score.clear();
+    score = {
+            {0, 0},
+            {1, 0},
+            {2, 0},
+            {3, 0}
+    };
+    //qDebug() << "sdaasdaswewqeqwe234234234";
 }
 
 
