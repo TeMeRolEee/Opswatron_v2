@@ -1,21 +1,31 @@
 #include "Worker.h"
-#include "Core.h"
-#import "directions.h"
 
 #include <QDebug>
 
-Worker::Worker(const int &id, GameMap &gameMap, QMap<int, Player*> &players, const int &direction, const int &depth, const int &interval): id(id),
-    gameMap(&gameMap),
-    players(players),
-    direction(direction),
-    currentDepth(depth){
+#include "Core.h"
+#include "directions.h"
+
+
+Worker::Worker(const int &id, GameMap &gameMap, QMap<int, Player *> &players, const int &direction, const int &depth,
+               const int &interval, const QPair<int, int> &position) : id(id),
+                                                                       gameMap(&gameMap),
+                                                                       players(players),
+                                                                       direction(direction),
+                                                                       currentDepth(depth),
+                                                                       position(position) {
     stringToIntDir = {
-            {"UP", 0},
-            {"DOWN", 1},
-            {"LEFT", 2},
+            {"UP",    0},
+            {"DOWN",  1},
+            {"LEFT",  2},
             {"RIGHT", 3}
     };
-    points = {
+    reverseDirection = {
+            {"UP",    "DOWN"},
+            {"DOWN",  "UP"},
+            {"LEFT",  "RIGHT"},
+            {"RIGHT", "LEFT"}
+    };
+    score = {
             {0, 0},
             {1, 0},
             {2, 0},
@@ -30,7 +40,27 @@ Worker::~Worker() {
 
 void Worker::run() {
     qTimer->start();
-    QString result;
+    int result;
+
+    QVector<int> possibleDirections;
+    int currentReverseDirection = stringToIntDir.value(reverseDirection.value(direction));
+
+    for (const auto &value : stringToIntDir) {
+        if ((value != currentReverseDirection) &&
+            (utils.checkObstacle(position, stringToIntDir.key(value), *gameMap))) {
+            possibleDirections.push_back(value);
+        }
+    }
+    for (const auto &currentDirection : stringToIntDir.keys()) {
+        if (direction != reverseDirection.value(currentDirection)) {
+            int dir = stringToIntDir.value(currentDirection);
+            testPaths(dir, currentDepth, dir);
+        }
+
+    }
+
+
+    result = decideBestWay();
 
     qDebug() << QThread::currentThreadId();
 
@@ -38,54 +68,39 @@ void Worker::run() {
 }
 
 void Worker::shutDownWorker() {
-    emit resultReady(id, currentBestMove);
+    emit resultReady(id, currentDepth);
 }
 
-void Worker::createSubWorkers(const QVector<int> &directions) {
-    int nextDepth = currentDepth;
 
-    if (currentDepth < 3) {
-        nextDepth++;
+int Worker::decideBestWay() {
+    int bestDirection = stringToIntDir.value(direction);
+    int bestScore = score.value(bestDirection);
 
-        for (auto currentDirection : directions) {
-            auto *worker = new Worker(workerCount, *gameMap, players, currentDirection, nextDepth,
-                                      static_cast<int>(qTimer->interval()*0.65));
-            workers.insert(workerCount, worker);
-            workerCount++;
-
-            connect(worker, &Worker::resultReady, this, &Core::handleResults);
-            connect(this, &Core::getResultNow, worker, &Worker::shutDownWorker);
-            connect(qTimer, &QTimer::timeout, worker, &Worker::shutDownWorker);
-            worker->start();
+    for (auto currentDir : score.keys()) {
+        if (score.value(currentDir) > bestScore) {
+            bestScore = score.value(currentDir);
+            bestDirection = currentDir;
         }
     }
 }
 
-bool Worker::checkObstacle(const QPair<int, int> &currentPosition, const QString &direction) {
-    return gameMap->getPositionInfo(returnNextPos(currentPosition, direction)) == 1;
-}
+void Worker::testPaths(const int &direction, int &depth, const int &rootDirection) {
+    int nextDepth = depth;
+    if (nextDepth < 3) {
 
-QPair<int, int> Worker::returnNextPos(const QPair<int, int> &currentPosition, const QString &direction) {
-    switch (stringToIntDir[direction]) {
-        case static_cast<int>(Directions::UP):
-            return QPair<int, int>(currentPosition.first-1, currentPosition.second);
-        case static_cast<int>(Directions::DOWN):
-            return QPair<int, int>(currentPosition.first+1, currentPosition.second);
-        case static_cast<int>(Directions::LEFT):
-            return QPair<int, int>(currentPosition.first, currentPosition.second-1);
-        case static_cast<int>(Directions::RIGHT):
-            return QPair<int, int>(currentPosition.first-1, currentPosition.second+1);
-        default:break;
+
+        for (const auto &currentDirection : stringToIntDir.keys()) {
+            if (direction != reverseDirection.value(currentDirection)) {
+                QPair<int, int> nextPath = utils.returnNextPos(position, direction);
+                if (!utils.checkObstacle(nextPath, currentDirection, *gameMap)) {
+                     testPaths(stringToIntDir.value(currentDirection), nextDepth, rootDirection);
+                } else {
+                    score[rootDirection] = nextDepth;
+                }
+            }
+
+        }
+        nextDepth++;
     }
-}
-
-void Worker::handleResults(const int &id, const int &depth) {
-    if (points[id] < depth) {
-        points[id] = depth;
-    }
-}
-
-void Worker::decideBestWay() {
-
 }
 

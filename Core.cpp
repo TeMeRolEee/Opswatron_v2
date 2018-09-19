@@ -5,12 +5,31 @@
 #include <QtCore/QJsonObject>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonArray>
+#include <iostream>
 
 #include "Core.h"
 #include "directions.h"
 
 Core::Core() {
     qTimer = new QTimer();
+    reverseDirection = {
+            {"UP",    "DOWN"},
+            {"DOWN",  "UP"},
+            {"LEFT",  "RIGHT"},
+            {"RIGHT", "LEFT"}
+    };
+    stringToIntDir = {
+            {"UP",    0},
+            {"DOWN",  1},
+            {"LEFT",  2},
+            {"RIGHT", 3}
+    };
+    score = {
+            {0, 0},
+            {1, 0},
+            {2, 0},
+            {3, 0}
+    };
 }
 
 Core::~Core() {
@@ -21,8 +40,8 @@ Core::~Core() {
 
 void Core::initCore(const QString &input) {
     QJsonObject qJsonObject = QJsonDocument::fromJson(input.toUtf8()).object();
-    interval = qJsonObject.value("interval").toInt();
-
+    interval = qJsonObject.value("interval").toInt()-5;
+    qTimer->start();
     QJsonArray gameMapArray = qJsonObject.value("map").toArray();
     gameMap = new GameMap(gameMapArray.first().toInt(), gameMapArray.last().toInt());
 
@@ -31,17 +50,28 @@ void Core::initCore(const QString &input) {
         players.insert(player.toObject().value("id").toInt(), createPlayer(player.toObject()));
     }
 
+    QVector<int> possibleDirections;
+    int currentReverseDirection = stringToIntDir.value(reverseDirection.value(me.getDirection()));
 
+    for (const auto &value : stringToIntDir) {
+        if ((value != currentReverseDirection) &&
+            (utils.checkObstacle(QPair<int, int>(me.getCurrentX(), me.getCurrentY()), stringToIntDir.key(value),
+                                 *gameMap))) {
+            possibleDirections.push_back(value);
+        }
+    }
 
 }
 
 void Core::processData(const QJsonObject &qJsonObject) {
-    auto point1 = std::chrono::high_resolution_clock::now();
+    //auto point1 = std::chrono::high_resolution_clock::now();
 
     if (interval != qJsonObject.value("interval").toInt()) {
         interval = qJsonObject.value("interval").toInt();
         qTimer->setInterval(interval);
     }
+
+
 
     QJsonArray other_Players = qJsonObject.value("other_players").toArray();
     for (auto player : other_Players) {
@@ -66,11 +96,30 @@ void Core::processData(const QJsonObject &qJsonObject) {
                            brickArray.last().toInt());
     }
 
-    auto point2 = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(point2 - point1).count();
-    qDebug() << "time needed to process data:" << duration << "ms";
+    //auto point2 = std::chrono::high_resolution_clock::now();
+    //auto duration = std::chrono::duration_cast<std::chrono::microseconds>(point2 - point1).count();
+    //qDebug() << "time needed to process data:" << duration << "ms";
 
-    createWorkers();
+    QVector<int> possibleDirections;
+    int currentReverseDirection = stringToIntDir.value(reverseDirection.value(me.getDirection()));
+
+    for (const auto &value : stringToIntDir) {
+        if ((value != currentReverseDirection) &&
+            (utils.checkObstacle(me.getCurrentPosition(), stringToIntDir.key(value), *gameMap))) {
+            possibleDirections.push_back(value);
+        }
+    }
+
+    createWorkers(possibleDirections);
+
+    int bestDirection = stringToIntDir.value(me.getDirection());
+    int bestScore = score.value(bestDirection);
+    for (auto currentDir : score.keys()) {
+        if(score.value(currentDir) >  bestScore ) {
+            bestScore = score.value(currentDir);
+            bestDirection = currentDir;
+        }
+    }
 
 }
 
@@ -87,9 +136,11 @@ Player *Core::createPlayer(const QJsonObject &playerData) {
     return actualPlayer;
 }
 
-void Core::handleResults(const int &id, const QString &qString) {
+void Core::handleResults(const int &id, const int &inputScore) {
     workers.value(id)->quit();
     workers.value(id)->wait();
+
+    score[id] = inputScore;
 
     delete workers.take(id);
 }
@@ -106,50 +157,36 @@ const Player &Core::getMe() const {
     return me;
 }
 
-void Core::createWorkers() {
-    workerCount = 0;
+void Core::createWorkers(const QVector<int> &directions) {
+    int currentDirection = stringToIntDir.value(me.getDirection());
 
-    workers.clear();
+    for (auto currentPossibleDirection : directions) {
+        auto *worker = new Worker(workerCount, *gameMap, players, currentPossibleDirection, 0,
+                                  static_cast<int>(interval * 0.95),
+                                  QPair<int, int>(me.getCurrentX(), me.getCurrentY()));
 
-    int currentDirection;
-    QString direction = me.getDirection();
+        workers.insert(workerCount, worker);
+        workerCount++;
 
-    if (direction == "UP") {
-        currentDirection = 0;
-    } else if (direction == "DOWN") {
-        currentDirection = 1;
-    } else if (direction == "LEFT") {
-        currentDirection = 2;
-    } else {
-        currentDirection = 3;
+        connect(worker, &Worker::resultReady, this, &Core::handleResults);
+        connect(this, &Core::getResultNow, worker, &Worker::shutDownWorker);
+        connect(qTimer, &QTimer::timeout, worker, &Worker::shutDownWorker);
+        worker->start();
     }
+}
 
-    QMap<QString, int> stringToIntDir= {
-            {"UP", 0},
-            {"DOWN", 1},
-            {"LEFT", 2},
-            {"RIGHT", 3}
-    };
-
-    QVector<int> directionsVector;
-    directionsVector.push_back(0);
-    directionsVector.push_back(1);
-    directionsVector.push_back(2);
-    directionsVector.push_back(3);
-    qDebug() << currentDirection;
-
-    for (int i = 0; i < 3; i++) {
-        if (currentDirection != directionsVector[i]) {
-            auto *worker = new Worker(workerCount, *gameMap, players, directionsVector[i], 0);
-
-            workers.insert(workerCount, worker);
-            workerCount++;
-
-            connect(worker, &Worker::resultReady, this, &Core::handleResults);
-            connect(this, &Core::getResultNow, worker, &Worker::shutDownWorker);
-            connect(qTimer, &QTimer::timeout, worker, &Worker::shutDownWorker);
-            worker->start();
-        }
+void Core::printNextDirection(const int &direction) {
+    switch (direction) {
+        case static_cast<int>(Directions::UP):
+            std::cout << QStringLiteral("{\"dir\":\"UP\"}").arg(stringToIntDir.key(direction)).toStdString() << std::endl;
+        case static_cast<int>(Directions::DOWN):
+            std::cout << QStringLiteral("{\"dir\":\"DOWN\"}").arg(stringToIntDir.key(direction)).toStdString() << std::endl;
+        case static_cast<int>(Directions::LEFT):
+            std::cout << QStringLiteral("{\"dir\":\"LEFT\"}").arg(stringToIntDir.key(direction)).toStdString() << std::endl;
+        case static_cast<int>(Directions::RIGHT):
+            std::cout << QStringLiteral("{\"dir\":\"RIGHT\"}").arg(stringToIntDir.key(direction)).toStdString() << std::endl;
+        default:
+            break;
     }
 }
 

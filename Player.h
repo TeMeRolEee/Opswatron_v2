@@ -1,9 +1,12 @@
 #pragma once
 
 #include <QtCore/QString>
+#include <QtCore/QPair>
 
 class Player {
 public:
+    QPair<int, int> getCurrentPosition();
+
     int getCurrentX() const;
 
     void setCurrentX(int currentX);

@@ -48,3 +48,7 @@ void Player::setId(int id) {
     Player::id = id;
 }
 
+QPair<int, int> Player::getCurrentPosition() {
+    return QPair<int, int>(currentX, currentY);
+}
+

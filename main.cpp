@@ -46,6 +46,5 @@ int main(int argc, char *argv[]) {
         QJsonObject qJsonObject = QJsonDocument::fromJson(serverResponse.toUtf8()).object();
         core->processData(qJsonObject);
         serverResponse.clear();
-        go = false;
     }
 }
