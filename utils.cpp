@@ -5,13 +5,13 @@
 QPair<int, int> Utils::returnNextPos(const QPair<int, int> &currentPosition, const int &direction) {
     switch (direction) {
         case static_cast<int>(Directions::UP):
-            return QPair<int, int>(currentPosition.first - 1, currentPosition.second);
-        case static_cast<int>(Directions::DOWN):
-            return QPair<int, int>(currentPosition.first + 1, currentPosition.second);
-        case static_cast<int>(Directions::LEFT):
             return QPair<int, int>(currentPosition.first, currentPosition.second - 1);
+        case static_cast<int>(Directions::DOWN):
+            return QPair<int, int>(currentPosition.first, currentPosition.second + 1);
+        case static_cast<int>(Directions::LEFT):
+            return QPair<int, int>(currentPosition.first - 1, currentPosition.second);
         case static_cast<int>(Directions::RIGHT):
-            return QPair<int, int>(currentPosition.first - 1, currentPosition.second + 1);
+            return QPair<int, int>(currentPosition.first + 1, currentPosition.second);
         default:
             break;
     }
@@ -19,7 +19,7 @@ QPair<int, int> Utils::returnNextPos(const QPair<int, int> &currentPosition, con
 
 bool Utils::checkObstacle(const QPair<int, int> &currentPosition, const QString &direction, GameMap &gameMap) {
     int tempValue = gameMap.getPositionInfo(returnNextPos(currentPosition, stringToIntDir.value(direction)));
-    if (tempValue != -1) {
+    if (tempValue >= 0 ) {
         return tempValue == 1;
     }
     return true;

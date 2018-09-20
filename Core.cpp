@@ -62,6 +62,7 @@ void Core::processData(const QJsonObject &qJsonObject) {
     qTimer->start();
 
     QJsonArray other_Players = qJsonObject.value("other_players").toArray();
+
     for (auto player : other_Players) {
         if (player.toObject().value("alive").toBool()) {
             int playerId = player.toObject().value("id").toInt();
@@ -69,13 +70,17 @@ void Core::processData(const QJsonObject &qJsonObject) {
             players.value(playerId)->setCurrentX(coordsArray.first().toInt());
             players.value(playerId)->setCurrentY(coordsArray.last().toInt());
             players.value(playerId)->setDirection(player.toObject().value("dir").toString());
+            qDebug() << playerId << "<-id";
         }
     }
 
     me.setAlive(qJsonObject.value("player").toObject().value("alive").toBool());
     QJsonArray playerPosArray = qJsonObject.value("player").toArray();
-    me.setCurrentX(playerPosArray.first().toInt());
-    me.setCurrentY(playerPosArray.last().toInt());
+    me.setCurrentX(playerPosArray.at(0).toInt());
+    me.setCurrentY(playerPosArray.at(1).toInt());
+
+    qDebug() << me.getCurrentPosition() << "|" << other_Players.size() << "|";
+    qDebug() << me.getCurrentX() << me.getCurrentY();
 
     QJsonArray wallArray = qJsonObject.value("walls").toArray();
     for (auto bricks : wallArray) {
@@ -148,7 +153,6 @@ void Core::createWorkers(const QVector<int> &directions) {
             //     << (stringToIntDir.key(currentPossibleDirection) != stringToIntDir.key(currentReverseDirection))
             //     << stringToIntDir.key(currentPossibleDirection) << stringToIntDir.key(currentReverseDirection);
             auto *worker = new Worker(workerCount, *gameMap, players, currentPossibleDirection, 0,
-                                      static_cast<int>(interval * 0.95),
                                       QPair<int, int>(me.getCurrentX(), me.getCurrentY()));
             workers.insert(workerCount, worker);
             workerCount++;
@@ -190,6 +194,11 @@ void Core::think() {
     auto point1 = std::chrono::high_resolution_clock::now();
     for (auto worker : workers) {
         //qDebug() << worker->getId() << worker->getResult();
+
+        while(!worker->isDone()) {
+            QThread::msleep(3);
+        }
+
         int id = worker->getResult().first;
         int scoreNumber = worker->getId();
         if (score.value(id) < scoreNumber) {

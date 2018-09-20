@@ -12,9 +12,16 @@ class Worker : public QThread {
 Q_OBJECT
 
 public:
-    Worker(const int &id, GameMap &gameMap, QMap<int, Player *> &players, const int &direction, const int &depth, const int &interval, const QPair<int, int> &position);
+    Worker(const int &id, GameMap &gameMap, QMap<int, Player *> &players, const int &direction, const int &depth,
+           const QPair<int, int> &position);
 
     ~Worker();
+
+    int getId() const;
+
+    const QPair<int, int> &getResult() const;
+
+    bool isDone() const;
 
 protected:
     void run() override;
@@ -31,10 +38,6 @@ private:
     QMap<int, int> score;
 
     QPair<int, int> result;
-public:
-    const QPair<int, int> &getResult() const;
-
-private:
 
     void testPaths(const int &rootDirection, const int &currentDirection, const int &depth, QPair<int, int> &pos);
 
@@ -44,14 +47,15 @@ private:
 
     QMap<QString, QString> reverseDirection;
 
-    int workerCount, id, currentDepth;
-public:
-    int getId() const;
+    int id, currentDepth;
 
+    bool done = false;
 
 public slots:
+
     void getMeThoseNumbers();
 
 signals:
+
     void resultReady(const int &id, const int &direction, const int &score);
 };
