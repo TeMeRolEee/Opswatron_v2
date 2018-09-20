@@ -31,7 +31,7 @@ Worker::Worker(const int &id, GameMap &gameMap, QMap<int, Player *> &players, co
             {2, 0},
             {3, 0}
     };
-    qDebug() << "pos" << position;
+    //qDebug() << "pos" << position;
     //connect(this, &Worker::resultReady, this, []() {
     //   qDebug() << "MIAFASZOMEZASZARMAAAAAA";
     //});
@@ -57,8 +57,8 @@ void Worker::run() {
 
 
     result = utils.decideBestWay(score);
-    qDebug() << "worker_score" << id << ":" << score;
-    qDebug() << "result:" << id << ":" << result;
+    //qDebug() << "worker_score" << id << ":" << score;
+    //qDebug() << "result:" << id << ":" << result;
 
     done = true;
 
@@ -67,13 +67,13 @@ void Worker::run() {
 
 void Worker::testPaths(const int &rootDirection, const int &currentDirection, const int &depth, QPair<int, int> &pos) {
     if (depth < 4) {
-        qDebug() << depth;
-        for (const auto &currentAutoDirection : stringToIntDir.keys()) {
+        //qDebug() << depth;
+        /*for (const auto &currentAutoDirection : stringToIntDir.keys()) {
             qDebug() << currentAutoDirection << rootDirection << currentDirection << depth << pos;
-        }
+        }*/
 
         for (auto &currentAutoDirection : stringToIntDir) {
-            qDebug() << "depth:" << depth << "id" << id << QStringLiteral(
+            /*qDebug() << "depth:" << depth << "id" << id << QStringLiteral(
                     "currentAutoDirection: %0 != reverseDirection.value(stringToIntDir.key(currentDirection)): %1, stringToIntDir.key(currentDirection) %2").
                     arg(stringToIntDir.key(currentAutoDirection)).arg(reverseDirection.value(stringToIntDir.key(currentDirection))).arg(
                     stringToIntDir.key(currentDirection))
@@ -83,16 +83,16 @@ void Worker::testPaths(const int &rootDirection, const int &currentDirection, co
                          !(utils.checkObstacle(position, stringToIntDir.key(currentAutoDirection),
                                                *gameMap)))
                      << (utils.checkObstacle(position, stringToIntDir.key(currentAutoDirection),
-                                             *gameMap));
+                                             *gameMap));*/
 
-            qDebug() << reverseDirection.value(stringToIntDir.key(currentAutoDirection));
+            //qDebug() << reverseDirection.value(stringToIntDir.key(currentAutoDirection));
             if ((stringToIntDir.key(currentAutoDirection) != reverseDirection.value(stringToIntDir.key(currentAutoDirection))) &&
                 !(utils.checkObstacle(position, stringToIntDir.key(currentAutoDirection),
                                       *gameMap))) {
                 int temp = depth + 1;
 
                 QPair<int, int> tempPos = utils.returnNextPos(pos, currentDirection);
-                qDebug() << tempPos;
+                //qDebug() << tempPos;
                 testPaths(rootDirection, stringToIntDir.value(stringToIntDir.key(currentAutoDirection)), temp, tempPos);
             } else {
                 //qDebug() << "PATTTTH";

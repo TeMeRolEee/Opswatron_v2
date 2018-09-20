@@ -1,4 +1,7 @@
 #include "utils.h"
+
+#include <QDebug>
+
 #include "directions.h"
 #include "gameMap.h"
 
@@ -19,6 +22,7 @@ QPair<int, int> Utils::returnNextPos(const QPair<int, int> &currentPosition, con
 
 bool Utils::checkObstacle(const QPair<int, int> &currentPosition, const QString &direction, GameMap &gameMap) {
     int tempValue = gameMap.getPositionInfo(returnNextPos(currentPosition, stringToIntDir.value(direction)));
+    //qDebug() << "CHECKOBSTACLE TEMPVALUE:" << tempValue;
     if (tempValue >= 0 ) {
         return tempValue == 1;
     }

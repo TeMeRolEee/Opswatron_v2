@@ -40,8 +40,10 @@ void GameMap::placeWall(int x,int y) {
 }
 
 int GameMap::getPositionInfo(const QPair<int, int> &position) {
-    if ((0 < position.first < width) && (0 < position.second) < height) {
+    int x = position.first;
+    int y = position.second;
+    if ((x >= 0) && (x <= (width-1)) && ((y >= 0) && (y <= (height-1)))) {
         return gameMap->value(position);
     }
-    return -1;
+    return 1;
 }

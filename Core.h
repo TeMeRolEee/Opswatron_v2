@@ -32,6 +32,8 @@ public:
 
     void think();
 
+    int getInterval() const;
+
 private:
     Utils utils;
 
@@ -44,8 +46,6 @@ private:
     QTimer *qTimer;
 
     int interval = 0;
-public:
-    int getInterval() const;
 
 private:
 
@@ -54,8 +54,6 @@ private:
     int workerFinished = 0;
 
     QMap<int, Worker *> workers;
-
-    QMap<int, QStringList *> workerResults;
 
     QMap<QString, int> stringToIntDir;
 

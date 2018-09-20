@@ -70,21 +70,26 @@ void Core::processData(const QJsonObject &qJsonObject) {
             players.value(playerId)->setCurrentX(coordsArray.first().toInt());
             players.value(playerId)->setCurrentY(coordsArray.last().toInt());
             players.value(playerId)->setDirection(player.toObject().value("dir").toString());
-            qDebug() << playerId << "<-id";
+            //qDebug() << playerId << "<-id";
         }
     }
 
-    me.setAlive(qJsonObject.value("player").toObject().value("alive").toBool());
-    QJsonArray playerPosArray = qJsonObject.value("player").toArray();
+    QJsonObject player = qJsonObject.value("player").toObject();
+    me.setAlive(player.value("alive").toBool());
+    QJsonArray playerPosArray = player.value("coords").toArray();
+    //for (auto item : playerPosArray) {
+    //qDebug() << "Item:" << playerPosArray.at(0).toInt();
+    //}
     me.setCurrentX(playerPosArray.at(0).toInt());
     me.setCurrentY(playerPosArray.at(1).toInt());
 
-    qDebug() << me.getCurrentPosition() << "|" << other_Players.size() << "|";
-    qDebug() << me.getCurrentX() << me.getCurrentY();
+    //qDebug() << me.getCurrentPosition() << "|" << other_Players.size() << "|";
+    //qDebug() << me.getCurrentX() << me.getCurrentY();
 
     QJsonArray wallArray = qJsonObject.value("walls").toArray();
     for (auto bricks : wallArray) {
         QJsonArray brickArray = bricks.toObject().value("coords").toArray();
+        //qDebug() << brickArray;
         gameMap->placeWall(brickArray.first().toInt(),
                            brickArray.last().toInt());
     }
@@ -104,6 +109,8 @@ void Core::processData(const QJsonObject &qJsonObject) {
             possibleDirections.push_back(value);
         }
     }
+
+    //gameMap->showMap();
 
     createWorkers(possibleDirections);
 
