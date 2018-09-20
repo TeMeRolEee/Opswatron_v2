@@ -22,7 +22,6 @@ QPair<int, int> Utils::returnNextPos(const QPair<int, int> &currentPosition, con
 
 bool Utils::checkObstacle(const QPair<int, int> &currentPosition, const QString &direction, GameMap &gameMap) {
     int tempValue = gameMap.getPositionInfo(returnNextPos(currentPosition, stringToIntDir.value(direction)));
-    //qDebug() << "CHECKOBSTACLE TEMPVALUE:" << tempValue;
     if (tempValue >= 0 ) {
         return tempValue == 1;
     }
@@ -53,4 +52,21 @@ QPair<int, int> Utils::decideBestWay(QMap<int, int> &score) {
         }
     }
     return QPair<int, int>(bestDirection, bestScore);
+}
+
+bool Utils::checkEnemyAhead(const QPair<int, int> &position, const QString &direction, QMap<int, Player *> &players) {
+    bool okayToGoFurther = true;
+    for (auto enemyPlayer : players) {
+        QPair<int, int> enemyPlayerPosition = enemyPlayer->getCurrentPosition();
+        int playerDirection = stringToIntDir.value(enemyPlayer->getDirection());
+        if (position == returnNextPos(enemyPlayerPosition, playerDirection)) {
+            okayToGoFurther = false;
+            break;
+        }
+    }
+    return okayToGoFurther;
+}
+
+bool Utils::checkMoreSpaceLeft(const int &direction, const QPair<int, int> &currentPosition) {
+    return false;
 }

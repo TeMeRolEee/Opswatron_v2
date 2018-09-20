@@ -1,6 +1,8 @@
 #include <iostream>
 #include <memory>
 
+#include <QDebug>
+
 #include <QtCore/QCoreApplication>
 #include <QtCore/QCommandLineParser>
 #include <QtCore/QJsonObject>
@@ -45,9 +47,13 @@ int main(int argc, char *argv[]) {
     while (go) {
         //core->think();
         std::getline(std::cin, temp);
+        //auto point1 = std::chrono::high_resolution_clock::now();
         serverResponse = QString::fromStdString(temp);
         qJsonObject = QJsonDocument::fromJson(serverResponse.toUtf8()).object();
         core->processData(qJsonObject);
         serverResponse.clear();
+        //auto point2 = std::chrono::high_resolution_clock::now();
+        //auto duration = std::chrono::duration_cast<std::chrono::microseconds>(point2 - point1).count();
+        //qDebug() << "Time took to calculate everything" << duration << "microseconds";
     }
 }

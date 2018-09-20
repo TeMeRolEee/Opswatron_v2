@@ -53,7 +53,7 @@ void Core::initCore(const QString &input) {
 }
 
 void Core::processData(const QJsonObject &qJsonObject) {
-    auto point1 = std::chrono::high_resolution_clock::now();
+    //auto point1 = std::chrono::high_resolution_clock::now();
 
     if (interval != qJsonObject.value("interval").toInt()) {
         interval = static_cast<int>(qJsonObject.value("interval").toInt() * 0.8);
@@ -64,14 +64,12 @@ void Core::processData(const QJsonObject &qJsonObject) {
     QJsonArray other_Players = qJsonObject.value("other_players").toArray();
 
     for (auto player : other_Players) {
-        if (player.toObject().value("alive").toBool()) {
-            int playerId = player.toObject().value("id").toInt();
-            QJsonArray coordsArray = player.toObject().value("coords").toArray();
-            players.value(playerId)->setCurrentX(coordsArray.first().toInt());
-            players.value(playerId)->setCurrentY(coordsArray.last().toInt());
-            players.value(playerId)->setDirection(player.toObject().value("dir").toString());
-            //qDebug() << playerId << "<-id";
-        }
+        int playerId = player.toObject().value("id").toInt();
+        players.value(playerId)->setAlive(player.toObject().value("alive").toBool());
+        QJsonArray coordsArray = player.toObject().value("coords").toArray();
+        players.value(playerId)->setCurrentX(coordsArray.at(0).toInt());
+        players.value(playerId)->setCurrentY(coordsArray.at(1).toInt());
+        players.value(playerId)->setDirection(player.toObject().value("dir").toString());
     }
 
     QJsonObject player = qJsonObject.value("player").toObject();
@@ -94,8 +92,8 @@ void Core::processData(const QJsonObject &qJsonObject) {
                            brickArray.last().toInt());
     }
 
-    auto point2 = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(point2 - point1).count();
+    //auto point2 = std::chrono::high_resolution_clock::now();
+    //auto duration = std::chrono::duration_cast<std::chrono::microseconds>(point2 - point1).count();
 
     QVector<int> possibleDirections;
     int currentReverseDirection = stringToIntDir.value(reverseDirection.value(me.getDirection()));
@@ -153,18 +151,11 @@ const Player &Core::getMe() const {
 }
 
 void Core::createWorkers(const QVector<int> &directions) {
-    int currentReverseDirection = stringToIntDir.value(reverseDirection.value(me.getDirection()));
-    int i = 0;
     for (auto currentPossibleDirection : directions) {
-            //qDebug() << currentPossibleDirection << "false or not:"
-            //     << (stringToIntDir.key(currentPossibleDirection) != stringToIntDir.key(currentReverseDirection))
-            //     << stringToIntDir.key(currentPossibleDirection) << stringToIntDir.key(currentReverseDirection);
             auto *worker = new Worker(workerCount, *gameMap, players, currentPossibleDirection, 0,
                                       QPair<int, int>(me.getCurrentX(), me.getCurrentY()));
             workers.insert(workerCount, worker);
             workerCount++;
-            connect(this, &Core::getResultNow, worker, &Worker::getMeThoseNumbers);
-            connect(worker, &Worker::resultReady, this, &Core::handleResults);
             worker->start(QThread::HighestPriority);
     }
 }
@@ -198,12 +189,12 @@ int Core::getInterval() const {
 }
 
 void Core::think() {
-    auto point1 = std::chrono::high_resolution_clock::now();
+    //auto point1 = std::chrono::high_resolution_clock::now();
     for (auto worker : workers) {
         //qDebug() << worker->getId() << worker->getResult();
 
         while(!worker->isDone()) {
-            QThread::msleep(3);
+            QThread::usleep(1);
         }
 
         int id = worker->getResult().first;
@@ -215,14 +206,22 @@ void Core::think() {
     }
 
     //qDebug() << score;
-    QPair<int, int> result;
+    //QPair<int, int> result;
     //qDebug() << score;
-    result = utils.decideBestWay(score);
+    //result = utils.decideBestWay(score);
     //qDebug() << result.first;
-    printNextDirection(result.first);
+/*    QPair<int, int> freeSpace = gameMap->getSpaceLeft(me.getCurrentPosition(), result.first);
 
-    auto point2 = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(point2 - point1).count();
+    if (freeSpace.first != freeSpace.second) {
+        if (freeSpace.first > freeSpace.second) {
+            printNextDirection()
+        }
+    }*/
+
+    printNextDirection(utils.decideBestWay(score).first);
+
+    //auto point2 = std::chrono::high_resolution_clock::now();
+    //auto duration = std::chrono::duration_cast<std::chrono::microseconds>(point2 - point1).count();
 
     for (auto id : workers.keys()) {
         workers.value(id)->quit();

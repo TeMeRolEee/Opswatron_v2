@@ -41,6 +41,8 @@ private:
 
     void testPaths(const int &rootDirection, const int &currentDirection, const int &depth, QPair<int, int> &pos);
 
+    //
+
     QString direction;
 
     QMap<QString, int> stringToIntDir;
@@ -51,11 +53,4 @@ private:
 
     bool done = false;
 
-public slots:
-
-    void getMeThoseNumbers();
-
-signals:
-
-    void resultReady(const int &id, const int &direction, const int &score);
 };
