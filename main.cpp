@@ -30,7 +30,10 @@ int main(int argc, char *argv[]) {
 
 	auto core = std::make_unique<Core>();
 
+	core->start();
+
 	core->init();
 
-	return 0;
+
+	return QCoreApplication::exec();
 }

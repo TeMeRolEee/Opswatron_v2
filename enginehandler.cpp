@@ -7,7 +7,7 @@
 EngineHandler::EngineHandler() {
 	engineList = new QMap<QUuid, Engine *>();
 	resultMap = new QMap<QUuid, QJsonArray *>;
-	connect(this, &EngineHandler::handleCalculation_slot, this, &EngineHandler::calculationComplete_signal);
+	//connect(this, &EngineHandler::handleCalculation_slot, this, &EngineHandler::calculationComplete_signal);
 }
 
 EngineHandler::~EngineHandler() {
@@ -31,14 +31,29 @@ void EngineHandler::addNewEngine_slot() {
 }
 
 void EngineHandler::handleNewTask_slot(QPair<int, int> currentPos, Directions direction, int maxDepth, GameMap *gameMap) {
-	QVector<Directions> availableDirections = getAvailableDirections(direction);
+	static QMap<Directions, Directions> reverseDirections = {
+			{Directions::UP,    Directions::DOWN},
+			{Directions::DOWN,  Directions::UP},
+			{Directions::LEFT,  Directions::RIGHT},
+			{Directions::RIGHT, Directions::LEFT}
+	};
+
+	auto *goodDirections = new QVector<Directions>();
+
+	for (auto currentDirection : reverseDirections) {
+		if (reverseDirections.value(currentDirection) != currentDirection) {
+			goodDirections->append(currentDirection);
+		}
+	}
 
 	for (auto engineKey : engineList->keys()) {
 		emit engineList->value(engineKey)->startCalculate_slot(currentPos,
-															   availableDirections.takeAt(0),
+															   goodDirections->takeAt(0),
 															   maxDepth,
 															   gameMap);
 	}
+
+	delete goodDirections;
 }
 
 void EngineHandler::handleCalculation_slot(Directions direction, int distance) {
@@ -49,21 +64,3 @@ int EngineHandler::getEngineCount() {
 	return engineCount;
 }
 
-QVector<Directions> EngineHandler::getAvailableDirections(Directions currentDirection) {
-	static QMap<Directions, Directions> reverseDirections = {
-			{Directions::UP,    Directions::DOWN},
-			{Directions::DOWN,  Directions::UP},
-			{Directions::LEFT,  Directions::RIGHT},
-			{Directions::RIGHT, Directions::LEFT}
-	};
-
-	QVector<Directions> goodDirections;
-
-	for (auto direction : reverseDirections) {
-		if (reverseDirections.value(currentDirection) != direction) {
-			goodDirections.append(direction);
-		}
-	}
-
-	return goodDirections;
-}

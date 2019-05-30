@@ -38,7 +38,6 @@ signals:
 
 	void calculationComplete_signal(Directions direction, int distance);
 
-	QVector<Directions> getAvailableDirections(Directions currentDirection);
 };
 
 

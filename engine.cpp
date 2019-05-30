@@ -1,4 +1,5 @@
 #include "engine.h"
+#include <QDebug>
 
 Engine::Engine() {
 }
@@ -12,6 +13,7 @@ Engine::~Engine() {
 }
 
 void Engine::startCalculate_slot(QPair<int, int> currentPos, Directions direction, int maxDepth, GameMap *gameMap) {
-
+	qDebug() << currentPos.first << currentPos.second << static_cast<int>(direction) << maxDepth;
+	gameMap->showMap();
 }
 

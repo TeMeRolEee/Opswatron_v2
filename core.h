@@ -30,7 +30,11 @@ private:
 
 	int interval = 0;
 
-	int currentBestDirection, maxDistance;
+	int maxDistance;
+
+	Directions currentBestDirection;
+
+	Directions getDirection(const QString &direction);
 
 private slots:
 
@@ -45,5 +49,7 @@ signals:
 	void taskSignal(QPair<int, int> currentPos, Directions direction, int maxDepth, GameMap *gameMap);
 
 	void resetEngines_signal();
+
+	void stopCliHandler_signal();
 };
 
