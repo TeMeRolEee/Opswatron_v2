@@ -4,6 +4,7 @@
 #include <QtCore/QTimer>
 
 #include "clihandler.h"
+#include "enginehandler.h"
 
 class Core : public QThread {
 Q_OBJECT
@@ -21,13 +22,18 @@ private:
 
 	CliHandler *cliHandler;
 
+	EngineHandler *engineHandler = nullptr;
+
+	GameMap *gameMap;
+
 	int interval = 0;
+	int width, height;
 
 private slots:
 
 	void handleEngineResults_slot(QUuid uniqueId, const QJsonObject &result);
 
-	void handleNewTask_slot(const QString &input);
+	void handleNewTask_slot(const QJsonObject &qJsonObject);
 
 	void result_slot(QUuid id);
 

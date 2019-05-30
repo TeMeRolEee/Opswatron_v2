@@ -9,6 +9,9 @@ void Core::run() {
 bool Core::init() {
 	connect(this, &Core::finished, this, &Core::deleteLater);
 
+	cliHandler = new CliHandler();
+	connect(cliHandler, &CliHandler::newTask_signal, this, &Core::handleNewTask_slot);
+
 	engineHandler = new EngineHandler();
 	connect(this, &Core::addNewEngine_signal, engineHandler, &EngineHandler::addNewEngine_slot);
 	connect(this, &Core::startNewScanTask_signal, engineHandler, &EngineHandler::handleNewTask_slot,
@@ -28,4 +31,13 @@ Core::~Core() {
 	cliHandler->wait();
 	cliHandler->quit();
 	delete cliHandler;
+
+	engineHandler->wait();
+	engineHandler->quit();
+	delete engineHandler;
+
+	delete gameMap;
+}
+
+void Core::handleNewTask_slot(const QJsonObject &qJsonObject) {
 }

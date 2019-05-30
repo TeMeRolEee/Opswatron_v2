@@ -1,5 +1,7 @@
-#include <iostream>
 #include "gamemap.h"
+
+#include <iostream>
+#include <QDebug>
 
 GameMap::GameMap(const int &inputWidth, const int &inputHeight) :
 		width(inputWidth),
@@ -23,9 +25,9 @@ void GameMap::showMap() {
 			QPair<int, int> mapPlace(x, y);
 			line += std::to_string(gameMap.value(mapPlace));
 		}
-		qDebug() << line << std::endl;
+		qDebug() << QString::fromStdString(line);
 	}
-	qDebug() << std::endl << std::endl;
+	qDebug() << "\n\n\n";
 }
 
 void GameMap::placeWall(int x, int y) {
