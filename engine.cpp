@@ -11,7 +11,7 @@ Engine::~Engine() {
 	delete gameMap;
 }
 
-void Engine::startCalculate_slot(QPair<int, int> currentPos, int direction, int maxDepth, GameMap *gameMap) {
+void Engine::startCalculate_slot(QPair<int, int> currentPos, Directions direction, int maxDepth, GameMap *gameMap) {
 
 }
 

@@ -2,6 +2,7 @@
 
 #include <QtCore/QThread>
 #include "gamemap.h"
+#include "directions.h"
 
 class Engine : public QThread {
 Q_OBJECT
@@ -19,11 +20,13 @@ private:
 
 public slots:
 
-	void startCalculate_slot(QPair<int, int> currentPos, int direction, int maxDepth, GameMap *gameMap);
+	void startCalculate_slot(QPair<int, int> currentPos, Directions direction, int maxDepth, GameMap *gameMap);
 
 signals:
 
-	void calculationFinised_signal(int direction, int distance);
+	void startCalculate_signal(QPair<int, int> currentPos, Directions direction, int maxDepth, GameMap *gameMap);
+
+	void calculationFinished_signal(Directions direction, int distance);
 };
 
 
